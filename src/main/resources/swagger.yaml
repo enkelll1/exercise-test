@@ -1,0 +1,51 @@
+openapi: 3.0.0
+info:
+  title: Exercise API
+  description: API for managing exercises
+  version: 1.0.0
+paths:
+  /exercises:
+    post:
+      summary: Create an exercise
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseRequestDTO'
+      responses:
+        '201':
+          description: Exercise created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponseDTO'
+components:
+  schemas:
+    ExerciseRequestDTO:
+      type: object
+      properties:
+        sets:
+          type: integer
+        reps:
+          type: integer
+        bodyPart:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    ExerciseResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        sets:
+          type: integer
+        reps:
+          type: integer
+        bodyPart:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
