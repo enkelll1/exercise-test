@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   postgres:
     image: postgres:latest
@@ -10,6 +11,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - exercise-network
+    restart: always  # Ensures that PostgreSQL restarts if the container crashes
+
+networks:
+  exercise-network:
+    driver: bridge  # Default network driver
 
 volumes:
   postgres_data:
+    driver: local  # Persist data locally on the host
