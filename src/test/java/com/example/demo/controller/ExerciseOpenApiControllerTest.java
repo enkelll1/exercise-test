@@ -2,7 +2,7 @@ package com.example.demo.controller;
 
 
 import com.example.demo.dto.ExerciseOpenApiResponseDTO;
-import com.example.demo.service.ExerciseOpenApiService;
+import com.example.demo.service.impl.ExerciseOpenApiServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 class ExerciseOpenApiControllerTest {
 
     @Mock
-    private ExerciseOpenApiService service;
+    private ExerciseOpenApiServiceImpl service;
 
     @InjectMocks
     private ExerciseOpenApiController controller;

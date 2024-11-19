@@ -3,7 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.ExerciseRequestDTO;
 import com.example.demo.dto.ExerciseResponseDTO;
 import com.example.demo.entity.Exercise;
-import com.example.demo.service.ExerciseService;
+import com.example.demo.service.impl.ExerciseServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,13 +18,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ExerciseControllerTest {
 
     @Mock
-    private ExerciseService exerciseService;
+    private ExerciseServiceImpl exerciseService;
 
     @InjectMocks
     private ExerciseController exerciseController;
@@ -51,6 +52,8 @@ class ExerciseControllerTest {
         verify(exerciseService, times(1)).createExercise(any(ExerciseRequestDTO.class));
     }
 
+
+
     @Test
     void getExercises_ShouldReturnListOfExercises() {
         Exercise exercise1 = new Exercise();
@@ -72,16 +75,34 @@ class ExerciseControllerTest {
     @Test
     void updateExercise_ShouldReturnUpdatedExercise() {
         Long id = 1L;
-        Exercise updatedExercise = new Exercise();
-        updatedExercise.setId(id);
+        ExerciseRequestDTO updatedExercise = new ExerciseRequestDTO();
+        ExerciseResponseDTO responseDTO = new ExerciseResponseDTO();
         updatedExercise.setName("Updated Exercise");
 
-        when(exerciseService.updateExercise(id, updatedExercise)).thenReturn(updatedExercise);
+        when(exerciseService.updateExercise(id, updatedExercise)).thenReturn(responseDTO);
 
-        ResponseEntity<Exercise> response = exerciseController.updateExercise(id, updatedExercise);
+        ResponseEntity<ExerciseResponseDTO> response = exerciseController.updateExercise(id, updatedExercise);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(updatedExercise, response.getBody());
+        assertEquals(responseDTO, response.getBody());
+
+        verify(exerciseService, times(1)).updateExercise(id, updatedExercise);
+    }
+
+    @Test
+    void updateExercise_ShouldReturnBadRequestWhenRequiredFieldsAreMissing() {
+        Long id = 1L;
+        ExerciseRequestDTO updatedExercise = new ExerciseRequestDTO();
+
+        when(exerciseService.updateExercise(eq(id), any(ExerciseRequestDTO.class)))
+                .thenThrow(new IllegalArgumentException("Required fields are missing"));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            exerciseController.updateExercise(id, updatedExercise);
+        });
+
+        System.out.println(exception.getMessage());
+        assertEquals("Required fields are missing", exception.getMessage());
 
         verify(exerciseService, times(1)).updateExercise(id, updatedExercise);
     }

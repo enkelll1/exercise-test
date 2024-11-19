@@ -1,13 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.ExerciseOpenApiResponseDTO;
+import com.example.demo.repository.ExerciseRepository;
+import com.example.demo.service.impl.ExerciseOpenApiServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,7 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
 class ExerciseOpenApiServiceTest {
 
     @Mock
@@ -42,16 +41,26 @@ class ExerciseOpenApiServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
-    @Autowired
-    private ExerciseOpenApiService exerciseOpenApiService;
+    private ExerciseOpenApiServiceImpl exerciseOpenApiService;
+
+    @Mock
+    private ExerciseRepository exerciseRepository;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Mock WebClient.Builder behavior
         when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
         when(webClientBuilder.build()).thenReturn(webClient);
+
+        exerciseOpenApiService = new ExerciseOpenApiServiceImpl(
+                "adsadsdsa",
+                "saddsadsa",
+                "sadadsdsasad",
+                stringRedisTemplate,
+                rabbitTemplate,
+                webClientBuilder
+        );
     }
 
     @Test

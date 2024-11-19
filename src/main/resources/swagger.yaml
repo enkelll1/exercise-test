@@ -24,16 +24,31 @@ components:
     ExerciseRequestDTO:
       type: object
       properties:
-        setsRes:
+        setsReq:
           type: integer
-        repsRes:
+          minimum: 1
+          example: 10
+          nullable: false
+        repsReq:
           type: integer
+          minLength: 1
+          maxLength: 50
+          nullable: false
         bodyPart:
           type: string
+          example: "biceps"
+          nullable: false
         name:
           type: string
+          example: "pull up"
+          nullable: false
         description:
           type: string
+      required:
+        - setsReq
+        - repsReq
+        - bodyPart
+        - name
     ExerciseResponseDTO:
       type: object
       properties:

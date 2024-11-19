@@ -4,7 +4,8 @@ import com.example.demo.dto.ExerciseRequestDTO;
 import com.example.demo.dto.ExerciseResponseDTO;
 import com.example.demo.entity.Exercise;
 import com.example.demo.service.ExerciseService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +14,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/exercises")
+@AllArgsConstructor
 public class ExerciseController {
 
-    @Autowired
-    private ExerciseService exerciseService;
+    private final ExerciseService exerciseService;
+
 
     @PostMapping
-    public ResponseEntity<ExerciseResponseDTO> createExercise(@RequestBody ExerciseRequestDTO exerciseRequestDTO) {
+    public ResponseEntity<ExerciseResponseDTO> createExercise(@Valid @RequestBody ExerciseRequestDTO exerciseRequestDTO) {
         ExerciseResponseDTO responseDTO = exerciseService.createExercise(exerciseRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
@@ -33,17 +35,17 @@ public class ExerciseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Exercise> updateExercise(
+    public ResponseEntity<ExerciseResponseDTO> updateExercise(
             @PathVariable Long id,
-            @RequestBody Exercise updatedExercise) {
+            @Valid @RequestBody ExerciseRequestDTO updatedExercise ) {
 
-        Exercise exercise = exerciseService.updateExercise(id, updatedExercise);
+        ExerciseResponseDTO exercise = exerciseService.updateExercise(id, updatedExercise);
         return ResponseEntity.ok(exercise);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
         exerciseService.deleteExercise(id);
-        return ResponseEntity.noContent().build();  // 204 No Content on successful delete
+        return ResponseEntity.noContent().build();
     }
 }

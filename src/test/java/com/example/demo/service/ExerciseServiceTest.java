@@ -5,18 +5,20 @@ import com.example.demo.dto.ExerciseResponseDTO;
 import com.example.demo.entity.Exercise;
 import com.example.demo.mapper.ExerciseMapper;
 import com.example.demo.repository.ExerciseRepository;
+import com.example.demo.service.impl.ExerciseServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -29,7 +31,7 @@ class ExerciseServiceTest {
     private ExerciseMapper exerciseMapper;
 
     @InjectMocks
-    private ExerciseService exerciseService;
+    private ExerciseServiceImpl exerciseService;
 
     @BeforeEach
     void setUp() {
@@ -38,7 +40,6 @@ class ExerciseServiceTest {
 
     @Test
     void createExercise_ShouldReturnSavedExerciseResponseDTO() {
-        // Mock request and response
         ExerciseRequestDTO requestDTO = new ExerciseRequestDTO();
         Exercise exercise = new Exercise();
         Exercise savedExercise = new Exercise();
@@ -50,10 +51,8 @@ class ExerciseServiceTest {
         when(exerciseRepository.save(exercise)).thenReturn(savedExercise);
         when(exerciseMapper.toResponseDTO(savedExercise)).thenReturn(responseDTO);
 
-        // Call service method
         ExerciseResponseDTO result = exerciseService.createExercise(requestDTO);
 
-        // Verify result
         assertEquals(responseDTO, result);
 
         verify(exerciseMapper, times(1)).toEntity(requestDTO);
@@ -63,24 +62,20 @@ class ExerciseServiceTest {
 
     @Test
     void getExercises_ShouldReturnListOfExercises_WhenBodyPartIsNull() {
-        // Mock response
         Exercise exercise1 = new Exercise();
         Exercise exercise2 = new Exercise();
         List<Exercise> mockExercises = Arrays.asList(exercise1, exercise2);
 
         when(exerciseRepository.findAll()).thenReturn(mockExercises);
 
-        // Call service method
         List<Exercise> result = exerciseService.getExercises(null);
 
-        // Verify result
         assertEquals(mockExercises, result);
         verify(exerciseRepository, times(1)).findAll();
     }
 
     @Test
     void getExercises_ShouldReturnListOfExercises_WhenBodyPartIsProvided() {
-        // Mock response
         String bodyPart = "arms";
         Exercise exercise = new Exercise();
         exercise.setBodyPart(bodyPart);
@@ -88,90 +83,94 @@ class ExerciseServiceTest {
 
         when(exerciseRepository.findByBodyPart(bodyPart)).thenReturn(mockExercises);
 
-        // Call service method
         List<Exercise> result = exerciseService.getExercises(bodyPart);
 
-        // Verify result
         assertEquals(mockExercises, result);
         verify(exerciseRepository, times(1)).findByBodyPart(bodyPart);
     }
 
     @Test
-    void updateExercise_ShouldReturnUpdatedExercise() {
-        // Mock request and response
-        Long id = 1L;
+    void testUpdateExercise_WhenExerciseExists_UpdatesSuccessfully() {
+        Long exerciseId = 1L;
         Exercise existingExercise = new Exercise();
-        existingExercise.setId(id);
+        existingExercise.setId(exerciseId);
+        existingExercise.setName("Old Exercise");
+        existingExercise.setName("Old Exercise");
+
+        ExerciseRequestDTO updateRequest = new ExerciseRequestDTO();
+        updateRequest.setName("Updated Exercise");
+        updateRequest.setSetsReq(5);
+        updateRequest.setRepsReq(10);
+
         Exercise updatedExercise = new Exercise();
-        updatedExercise.setSets(3);
-        updatedExercise.setReps(10);
-        updatedExercise.setBodyPart("legs");
-        updatedExercise.setName("Updated Exercise");
-        updatedExercise.setDescription("Updated description");
+        updatedExercise.setId(exerciseId);
+        updatedExercise.setName(updateRequest.getName());
+        updatedExercise.setSets(updateRequest.getSetsReq());
+        updatedExercise.setReps(updateRequest.getRepsReq());
 
-        when(exerciseRepository.findById(id)).thenReturn(Optional.of(existingExercise));
-        when(exerciseRepository.save(existingExercise)).thenReturn(existingExercise);
+        ExerciseResponseDTO responseDTO = new ExerciseResponseDTO();
+        responseDTO.setId(Math.toIntExact(exerciseId));
+        responseDTO.setName(updateRequest.getName());
 
-        // Call service method
-        Exercise result = exerciseService.updateExercise(id, updatedExercise);
+        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.of(existingExercise));
+        when(exerciseRepository.save(existingExercise)).thenReturn(updatedExercise);
+        when(exerciseMapper.toResponseDTO(updatedExercise)).thenReturn(responseDTO);
 
-        // Verify result
-        assertEquals(existingExercise, result);
-        assertEquals("Updated Exercise", result.getName());
-        assertEquals(3, result.getSets());
-        assertEquals("legs", result.getBodyPart());
+        ExerciseResponseDTO result = exerciseService.updateExercise(exerciseId, updateRequest);
 
-        verify(exerciseRepository, times(1)).findById(id);
-        verify(exerciseRepository, times(1)).save(existingExercise);
+        assertNotNull(result);
+        assertEquals(responseDTO.getId(), result.getId());
+        assertEquals(responseDTO.getName(), result.getName());
+
+        verify(exerciseRepository).findById(exerciseId);
+        verify(exerciseRepository).save(existingExercise);
+        verify(exerciseMapper).toResponseDTO(updatedExercise);
     }
 
     @Test
-    void updateExercise_ShouldThrowException_WhenExerciseNotFound() {
-        // Mock response
-        Long id = 1L;
-        Exercise updatedExercise = new Exercise();
+    void testUpdateExercise_WhenExerciseDoesNotExist_ThrowsException() {
+        Long exerciseId = 2L;
+        ExerciseRequestDTO updateRequest = new ExerciseRequestDTO();
+        updateRequest.setName("Updated Exercise");
 
-        when(exerciseRepository.findById(id)).thenReturn(Optional.empty());
+        when(exerciseRepository.findById(exerciseId)).thenReturn(Optional.empty());
 
-        // Call service method and verify exception
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            exerciseService.updateExercise(id, updatedExercise);
-        });
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> exerciseService.updateExercise(exerciseId, updateRequest));
 
-        assertEquals("Exercise not found with id: " + id, exception.getMessage());
-        verify(exerciseRepository, times(1)).findById(id);
-        verify(exerciseRepository, never()).save(any(Exercise.class));
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Exercise not found with id: " + exerciseId));
+
+        verify(exerciseRepository).findById(exerciseId);
+        verify(exerciseRepository, never()).save(any());
+        verify(exerciseMapper, never()).toResponseDTO(any());
     }
 
     @Test
     void deleteExercise_ShouldDeleteExercise_WhenExerciseExists() {
-        // Mock response
         Long id = 1L;
 
         when(exerciseRepository.existsById(id)).thenReturn(true);
 
-        // Call service method
         exerciseService.deleteExercise(id);
 
-        // Verify method call
         verify(exerciseRepository, times(1)).existsById(id);
         verify(exerciseRepository, times(1)).deleteById(id);
     }
 
     @Test
     void deleteExercise_ShouldThrowException_WhenExerciseNotFound() {
-        // Mock response
         Long id = 1L;
 
         when(exerciseRepository.existsById(id)).thenReturn(false);
 
-        // Call service method and verify exception
-        Exception exception = assertThrows(RuntimeException.class, () -> {
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
             exerciseService.deleteExercise(id);
         });
 
-        assertEquals("Exercise not found with id: " + id, exception.getMessage());
+        assertEquals("Exercise not found with id: " + id, exception.getReason());
+
         verify(exerciseRepository, times(1)).existsById(id);
-        verify(exerciseRepository, never()).deleteById(id);
+        verify(exerciseRepository, never()).deleteById(anyLong());
     }
 }
